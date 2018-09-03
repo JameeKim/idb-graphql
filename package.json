@@ -6,6 +6,10 @@
   "types": "dist/types/index.d.ts",
   "author": "Jamee Kim <jameekim@nodaplife.me>",
   "license": "MIT",
+  "scripts": {
+    "build:module": "tsc -p src/tsconfig.json",
+    "build:cjs": "tsc -p src/tsconfig.cjs.json"
+  },
   "dependencies": {
     "dexie": "^2.0.4",
     "dexie-observable": "^1.0.0-beta.4",

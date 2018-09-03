@@ -1,6 +1,4 @@
-export interface EntityMap {
-  [entityName: string]: EntityInfo;
-}
+export type EntityMap = Map<string, EntityInfo>;
 
 export interface EntityInfo {
   name: string;
@@ -9,10 +7,5 @@ export interface EntityInfo {
 
 export interface FieldInfo {
   name: string;
-  index: "primary" | "unique" | RelationTypes | null;
-}
-
-export enum RelationTypes {
-  MapToOne = "MapToOne",
-  MapToMany = "MapToMany",
+  index: "primary" | Array<"unique" | "multi" | "plain"> | null;
 }
