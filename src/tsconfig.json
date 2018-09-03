@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es2015",
+    "module": "es2015",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "lib": [
+      "es2015",
+      "es2016",
+      "es2017",
+      "dom"
+    ],
+    "outDir": "../dist/module",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationDir": "../dist/types",
+    "forceConsistentCasingInFileNames": true,
+    "newLine": "lf",
+    "noImplicitReturns": true,
+    "strict": true
+  },
+  "include": [
+    "**/*.ts"
+  ]
+}

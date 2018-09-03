@@ -1,0 +1,19 @@
+{
+  "name": "idb-graphql",
+  "version": "1.0.0",
+  "main": "dist/commonjs/index.js",
+  "module": "dist/module/index.js",
+  "types": "dist/types/index.d.ts",
+  "author": "Jamee Kim <jameekim@nodaplife.me>",
+  "license": "MIT",
+  "dependencies": {
+    "dexie": "^2.0.4",
+    "dexie-observable": "^1.0.0-beta.4",
+    "graphql": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/graphql": "^0.13.4",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3"
+  }
+}

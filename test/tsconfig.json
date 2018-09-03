@@ -1,0 +1,14 @@
+{
+  "extends": "../src/tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "outDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "idb-graphql": ["../src"]
+    }
+  },
+  "include": [
+    "**/*.ts"
+  ]
+}
