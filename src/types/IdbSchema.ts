@@ -2,6 +2,10 @@ import Dexie from "dexie";
 import { DocumentNode, GraphQLSchema } from "graphql";
 import { IdbGraphQLConfig } from "./IdbGraphQL";
 
+export interface IdbSchemaCreatorInterface {
+  setSchema(): void;
+}
+
 export interface IdbSchema {
   [key: string]: string | null;
 }

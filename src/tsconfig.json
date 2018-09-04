@@ -16,6 +16,7 @@
     "sourceMap": true,
     "declaration": true,
     "declarationDir": "../dist/types",
+    "stripInternal": true,
     "forceConsistentCasingInFileNames": true,
     "newLine": "lf",
     "noImplicitReturns": true,

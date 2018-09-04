@@ -1,0 +1,6 @@
+{
+  "extends": "../src/tslint.json",
+  "rules": {
+    "only-arrow-functions": false
+  }
+}

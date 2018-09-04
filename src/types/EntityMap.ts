@@ -7,5 +7,5 @@ export interface EntityInfo {
 
 export interface FieldInfo {
   name: string;
-  index: "primary" | Array<"unique" | "multi" | "plain"> | null;
+  index: "primary" | "auto" | Array<"unique" | "multi" | "plain"> | null;
 }
