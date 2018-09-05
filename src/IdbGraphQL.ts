@@ -3,6 +3,7 @@ import DexieObservable from "dexie-observable";
 import { IdbSchemaCreator } from "./schema";
 import { IdbGraphQLConfig, IdbGraphQLConfigInternal, IdbGraphQLInterface } from "./types/IdbGraphQL";
 import { IdbSchemaCreatorInterface, IdbSchemaInput } from "./types/IdbSchema";
+import { Maybe } from "./types/utils";
 
 export const IdbGraphQLDefaultConfig: IdbGraphQLConfigInternal = {
   upgradeMap: {},
@@ -14,7 +15,7 @@ export const IdbGraphQLDefaultConfig: IdbGraphQLConfigInternal = {
 export class IdbGraphQL implements IdbGraphQLInterface {
   public readonly db: Dexie;
   protected config: IdbGraphQLConfigInternal;
-  protected schemaInput: IdbSchemaInput[];
+  protected schemaInput: Array<Maybe<IdbSchemaInput>>;
   protected schemaCreator: IdbSchemaCreatorInterface;
 
   constructor(config: IdbGraphQLConfig) {

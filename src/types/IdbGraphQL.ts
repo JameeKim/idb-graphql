@@ -1,7 +1,7 @@
 import Dexie from "dexie";
 import { AbstractIdbSchemaCreator } from "../schema";
 import { IdbSchemaInput, UpgradeMap } from "./IdbSchema";
-import { Omit } from "./utils";
+import { Maybe, Omit } from "./utils";
 
 export interface IdbGraphQLInterface {
   query(): any;
@@ -9,7 +9,7 @@ export interface IdbGraphQLInterface {
 }
 
 export interface IdbGraphQLConfig {
-  schema: IdbSchemaInput | IdbSchemaInput[];
+  schema: IdbSchemaInput | Array<Maybe<IdbSchemaInput>>;
   upgradeMap?: UpgradeMap;
   versionStart?: number;
   idbBridge?: Dexie;

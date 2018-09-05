@@ -11,15 +11,16 @@ import {
   visit,
 } from "graphql";
 import { IdbGraphQLError } from "../errors/IdbGraphQLError";
-import { EntityMap, FieldInfo } from "../types/EntityMap";
+import { EntityMap, FieldInfo } from "../types";
 import { IdbGraphQLConfigInternal } from "../types/IdbGraphQL";
 import { IdbSchema, IdbSchemaInput, UpgradeMapFunction } from "../types/IdbSchema";
+import { Maybe } from "../types/utils";
 import { AbstractIdbSchemaCreator } from "./AbstractIdbSchemaCreator";
 import { getNamedType, isListType } from "./ASTUtils";
 import { directiveASTs } from "./directives";
 
 export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
-  constructor(db: Dexie, schema: IdbSchemaInput[], config: IdbGraphQLConfigInternal) {
+  constructor(db: Dexie, schema: Array<Maybe<IdbSchemaInput>>, config: IdbGraphQLConfigInternal) {
     super(db, schema, config);
     // TODO create upgrade map here?
   }
@@ -31,7 +32,11 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
   public setSchema(): void {
     let i: number = this.config.versionStart;
     for (const schema of this.schemaArr) {
-      const version: Dexie.Version = this.db.version(++i / 10).stores(this.getIdbSchema(schema));
+      i++;
+      if (!schema) {
+        continue;
+      }
+      const version: Dexie.Version = this.db.version(i / 10).stores(this.getIdbSchema(schema));
       if (this.config.upgradeMap[i]) {
         this.processUpgrade(version, this.config.upgradeMap[i]);
       }
@@ -136,6 +141,7 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
     const entityMap: EntityMap = new Map();
 
     for (const entity of schema.definitions) {
+      // TODO how to prevent query, mutation, and subscriptions types from being added to the entity list?
       if (
         entity.kind === Kind.OBJECT_TYPE_DEFINITION
         && entity.fields
@@ -190,6 +196,9 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
           continue;
         } else if (field.index === "auto") {
           indexNames.unshift("++" + field.name);
+          continue;
+        } else if (field.index === "uuid") {
+          indexNames.unshift("$$" + field.name);
           continue;
         }
 

@@ -5,4 +5,7 @@ export {
   directiveTypes,
   directiveStrings,
   directiveASTs,
+  getNamedType,
+  isListType,
 } from "./schema";
+export { EntityInfo, FieldInfo, EntityMap } from "./types";

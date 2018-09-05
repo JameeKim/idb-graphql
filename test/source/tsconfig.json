@@ -1,0 +1,14 @@
+{
+  "extends": "../../src/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../dist",
+    "declaration": false
+  },
+  "include": [
+    "**/*.spec.ts",
+    "prepare.ts"
+  ],
+  "exclude": [
+    "../../src/**/*.ts"
+  ]
+}
