@@ -1,5 +1,5 @@
 {
-  "extends": "../../src/tslint.json",
+  "extends": "../src/tslint.json",
   "rules": {
     "no-namespace": false,
     "no-reference": false,

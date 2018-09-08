@@ -1,0 +1,1 @@
+export { IdbGraphQLError } from "./IdbGraphQLError";

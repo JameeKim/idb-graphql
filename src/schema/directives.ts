@@ -1,5 +1,5 @@
 import {
-  DefinitionNode,
+  DirectiveDefinitionNode,
   DirectiveLocation,
   GraphQLBoolean,
   GraphQLDirective,
@@ -11,44 +11,51 @@ import {
 const gql = (strings: TemplateStringsArray) => strings.join("");
 
 export const directiveStrings = {
-  IdbEntity: gql`directive @IdbEntity(name: String) on OBJECT`,
-  IdbPrimary: gql`directive @IdbPrimary on FIELD_DEFINITION`,
-  IdbUnique: gql`directive @IdbUnique(multi: Boolean = false) on FIELD_DEFINITION`,
-  IdbRelation: gql`directive @IdbRelation(type: String!) on FIELD_DEFINITION`,
-  IdbIndex: gql`directive @IdbIndex(multi: Boolean = false) on FIELD_DEFINITION`,
+  IdbEntity: gql`directive @IdbEntity on OBJECT`,
+  IdbPrimary: gql`directive @IdbPrimary(auto: String = "", forceInt: Boolean = false) on FIELD_DEFINITION`,
+  IdbUnique: gql`directive @IdbUnique(multi: Boolean = false, compositeGroup: String) on FIELD_DEFINITION`,
+  IdbRelation: gql`directive @IdbRelation(many: Boolean!, unique: Boolean = false) on FIELD_DEFINITION`,
+  IdbIndex: gql`directive @IdbIndex(multi: Boolean = false, compositeGroup: String) on FIELD_DEFINITION`,
 };
 
-export const directiveASTs: { [k in keyof typeof directiveStrings]: DefinitionNode } = {
-  IdbEntity: parse(directiveStrings.IdbEntity, { noLocation: true }).definitions[0],
-  IdbPrimary: parse(directiveStrings.IdbPrimary, { noLocation: true }).definitions[0],
-  IdbUnique: parse(directiveStrings.IdbUnique, { noLocation: true }).definitions[0],
-  IdbRelation: parse(directiveStrings.IdbRelation, { noLocation: true }).definitions[0],
-  IdbIndex: parse(directiveStrings.IdbIndex, { noLocation: true }).definitions[0],
+export const directiveASTs: { [k in keyof typeof directiveStrings]: DirectiveDefinitionNode } = {
+  IdbEntity: parse(directiveStrings.IdbEntity, { noLocation: true }).definitions[0] as DirectiveDefinitionNode,
+  IdbPrimary: parse(directiveStrings.IdbPrimary, { noLocation: true }).definitions[0] as DirectiveDefinitionNode,
+  IdbUnique: parse(directiveStrings.IdbUnique, { noLocation: true }).definitions[0] as DirectiveDefinitionNode,
+  IdbRelation: parse(directiveStrings.IdbRelation, { noLocation: true }).definitions[0] as DirectiveDefinitionNode,
+  IdbIndex: parse(directiveStrings.IdbIndex, { noLocation: true }).definitions[0] as DirectiveDefinitionNode,
 };
 
+// TODO descriptions
 export const directiveTypes: { [k in keyof typeof directiveStrings]: GraphQLDirective } = {
   IdbEntity: new GraphQLDirective({
-    name: "Entity",
+    name: "IdbEntity",
     description: "Mark this object type as an entity to create an object store in db",
     locations: [
       DirectiveLocation.OBJECT,
     ],
-    args: {
-      name: {
-        type: GraphQLString,
-        description: "Table name to use",
-      },
-    },
   }),
   IdbPrimary: new GraphQLDirective({
-    name: "Primary",
+    name: "IdbPrimary",
     description: "Mark this field as the primary key for this entity",
     locations: [
       DirectiveLocation.FIELD_DEFINITION,
     ],
+    args: {
+      auto: {
+        type: GraphQLString,
+        defaultValue: "",
+        description: "",
+      },
+      forceInt: {
+        type: GraphQLBoolean,
+        defaultValue: false,
+        description: "",
+      },
+    },
   }),
   IdbUnique: new GraphQLDirective({
-    name: "Unique",
+    name: "IdbUnique",
     description: "Set a unique index on this field",
     locations: [
       DirectiveLocation.FIELD_DEFINITION,
@@ -56,25 +63,35 @@ export const directiveTypes: { [k in keyof typeof directiveStrings]: GraphQLDire
     args: {
       multi: {
         type: GraphQLBoolean,
+        defaultValue: false,
+        description: "",
+      },
+      compositeGroup: {
+        type: GraphQLString,
         description: "",
       },
     },
   }),
   IdbRelation: new GraphQLDirective({
-    name: "Relation",
+    name: "IdbRelation",
     description: "",
     locations: [
       DirectiveLocation.FIELD_DEFINITION,
     ],
     args: {
-      type: {
+      many: {
         type: new GraphQLNonNull(GraphQLString),
+        description: "",
+      },
+      unique: {
+        type: GraphQLBoolean,
+        defaultValue: false,
         description: "",
       },
     },
   }),
   IdbIndex: new GraphQLDirective({
-    name: "Index",
+    name: "IdbIndex",
     description: "",
     locations: [
       DirectiveLocation.FIELD_DEFINITION,
@@ -82,6 +99,11 @@ export const directiveTypes: { [k in keyof typeof directiveStrings]: GraphQLDire
     args: {
       multi: {
         type: GraphQLBoolean,
+        defaultValue: false,
+        description: "",
+      },
+      compositeGroup: {
+        type: GraphQLString,
         description: "",
       },
     },

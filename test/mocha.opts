@@ -1,2 +1,4 @@
---require test/dist/prepare.js
-test/dist/**/*.spec.js
+#--require tsconfig-paths/register
+--require ts-node/register
+--require test/prepare-fake-idb.ts
+test/**/*.spec.ts

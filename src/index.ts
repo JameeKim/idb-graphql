@@ -7,5 +7,7 @@ export {
   directiveASTs,
   getNamedType,
   isListType,
+  getDirectiveValueInfo,
 } from "./schema";
-export { EntityInfo, FieldInfo, EntityMap } from "./types";
+export { EntityInfo, FieldInfo, EntityMap, DirectiveValueInfo, DirectiveValueArgInfo } from "./types";
+export { IdbGraphQLError } from "./errors";

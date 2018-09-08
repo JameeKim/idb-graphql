@@ -1,0 +1,12 @@
+{
+  "extends": "../src/tsconfig.json",
+  "compilerOptions": {
+    "outDir": ".",
+    "declaration": false
+  },
+  "include": [
+    "**/*.spec.ts",
+    "prepare-fake-idb.ts"
+  ],
+  "exclude": []
+}

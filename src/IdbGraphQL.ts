@@ -1,15 +1,24 @@
 import Dexie from "dexie";
 import DexieObservable from "dexie-observable";
 import { IdbSchemaCreator } from "./schema";
-import { IdbGraphQLConfig, IdbGraphQLConfigInternal, IdbGraphQLInterface } from "./types/IdbGraphQL";
-import { IdbSchemaCreatorInterface, IdbSchemaInput } from "./types/IdbSchema";
-import { Maybe } from "./types/utils";
+import {
+  IdbGraphQLConfig,
+  IdbGraphQLConfigInternal,
+  IdbGraphQLInterface,
+  IdbSchemaCreatorInterface,
+  IdbSchemaInput,
+  Maybe,
+} from "./types";
+import { IdbGraphQLSchemaConfig } from "./types/IdbGraphQL";
 
 export const IdbGraphQLDefaultConfig: IdbGraphQLConfigInternal = {
   upgradeMap: {},
   versionStart: 1,
-  schemaCreator: IdbSchemaCreator,
-  suppressDuplicateDirectivesWarning: false,
+  schemaConfig: {
+    schemaCreator: IdbSchemaCreator,
+    suppressDuplicateDirectivesWarning: false,
+    entityIdTypes: ["ID", "Int", "String"],
+  },
 };
 
 export class IdbGraphQL implements IdbGraphQLInterface {
@@ -19,7 +28,10 @@ export class IdbGraphQL implements IdbGraphQLInterface {
   protected schemaCreator: IdbSchemaCreatorInterface;
 
   constructor(config: IdbGraphQLConfig) {
-    const { schema, idbBridge, ...otherConfig } = Object.assign({}, IdbGraphQLDefaultConfig, config);
+    const schemaConfig: Required<IdbGraphQLSchemaConfig>
+      = Object.assign({}, IdbGraphQLDefaultConfig.schemaConfig, config.schemaConfig);
+    const { schema, idbBridge, ...otherConfig }
+      = Object.assign({}, IdbGraphQLDefaultConfig, config, { schemaConfig });
     this.schemaInput = Array.isArray(schema) ? schema : [schema];
     this.config = otherConfig;
     if (idbBridge) {
@@ -29,7 +41,7 @@ export class IdbGraphQL implements IdbGraphQLInterface {
         addons: [DexieObservable],
       });
     }
-    this.schemaCreator = new this.config.schemaCreator(this.db, this.schemaInput, this.config);
+    this.schemaCreator = new this.config.schemaConfig.schemaCreator(this.db, this.schemaInput, this.config);
   }
 
   public query() {

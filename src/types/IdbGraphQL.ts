@@ -13,8 +13,17 @@ export interface IdbGraphQLConfig {
   upgradeMap?: UpgradeMap;
   versionStart?: number;
   idbBridge?: Dexie;
-  schemaCreator?: typeof AbstractIdbSchemaCreator;
-  suppressDuplicateDirectivesWarning?: boolean;
+  schemaConfig?: IdbGraphQLSchemaConfig;
 }
 
-export type IdbGraphQLConfigInternal = Required<Omit<IdbGraphQLConfig, "schema" | "idbBridge">>;
+export interface IdbGraphQLSchemaConfig {
+  schemaCreator?: typeof AbstractIdbSchemaCreator;
+  suppressDuplicateDirectivesWarning?: boolean;
+  entityIdTypes?: string[];
+}
+
+type KeysToOmit = "schema" | "idbBridge" | "schemaConfig";
+
+export type IdbGraphQLConfigInternal = Required<Omit<IdbGraphQLConfig, KeysToOmit>> & {
+  schemaConfig: Required<IdbGraphQLSchemaConfig>;
+};
