@@ -11,9 +11,13 @@
     "build:module": "tsc -p src/tsconfig.module.json",
     "clean:build": "rimraf dist",
     "clean:coverage": "rimraf coverage && rimraf .nyc_output",
+    "lint": "npm-run-all lint:*",
+    "lint:src": "tslint -p src/tsconfig.json -c src/tslint.json \"src/**/*.ts\"",
+    "lint:test": "tslint -p test/tsconfig.json -c test/tslint.json \"test/**/*.ts\"",
     "test": "TS_NODE_PROJECT=\"test/tsconfig.json\" mocha",
     "pretest:coverage": "npm-run-all clean:coverage",
     "test:coverage": "TS_NODE_PROJECT=\"test/tsconfig.json\" nyc mocha",
+    "coverage:check": "nyc check-coverage --lines 95 --functions 95 --branches 95 --statements 95",
     "coverage:send": "nyc report --reporter text-lcov | coveralls"
   },
   "dependencies": {

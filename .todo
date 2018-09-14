@@ -1,7 +1,8 @@
 General:
-  [ ] set up lint in test process
-  [ ] add node version 10 to travis
-  [ ] script to check coverage
+  [X] set up lint in test process
+  [X] add node version 10 to travis
+  [X] script to check coverage
+  [ ] add "yarn coverage:check" to travis
 
 IdbSchemaCreator:
   [ ] only accept schemaConfig from config

@@ -1,6 +1,7 @@
 language: node_js
 node_js:
   - "8"
+  - "10"
 sudo: false
 cache:
   yarn: true
@@ -9,6 +10,7 @@ cache:
 install:
   - yarn
 script:
+  - yarn lint
   - yarn test:coverage
 after_success:
   - yarn coverage:send
