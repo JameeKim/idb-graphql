@@ -1,0 +1,15 @@
+General:
+  [ ] set up lint in test process
+  [ ] add node version 10 to travis
+  [ ] script to check coverage
+
+IdbSchemaCreator:
+  [ ] only accept schemaConfig from config
+  [ ] docblocks
+
+Relation:
+  [ ] polymorphism
+  [ ] id-only field
+
+Primary:
+  [ ] composite primary key

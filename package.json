@@ -56,7 +56,6 @@
       "html",
       "text"
     ],
-    "all": true,
     "sourceMap": true,
     "instrument": true
   }

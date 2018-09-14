@@ -30,6 +30,7 @@ import {
   Maybe,
   UpgradeMapFunction,
 } from "../types";
+import { IdbGraphQLSchemaConfig } from "../types/IdbGraphQL";
 import { AbstractIdbSchemaCreator } from "./AbstractIdbSchemaCreator";
 import { getDirectiveValueInfo } from "./ASTUtils";
 import { directiveASTs, directiveTypes } from "./directives";
@@ -38,6 +39,10 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
   constructor(db: Dexie, schema: Array<Maybe<IdbSchemaInput>>, config: IdbGraphQLConfigInternal) {
     super(db, schema, config);
     // TODO create upgrade map here?
+  }
+
+  public setConfig(config: IdbGraphQLSchemaConfig): void {
+    Object.assign(this.config.schemaConfig, config);
   }
 
   /**
@@ -67,29 +72,31 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
    * Get single idb schema from single graphql schema input
    */
   public getIdbSchema(schema: IdbSchemaInput): IdbSchema {
+    let entityMap: EntityMap;
     if (typeof schema === "string") {
-      return this.getIdbSchemaFromString(schema);
+      entityMap = this.getEntityMapFromString(schema);
     } else if (isSchema(schema)) {
-      return this.getIdbSchemaFromSchemaObject(schema);
-    } else if (schema && schema.kind && schema.kind === Kind.DOCUMENT) {
-      return this.getIdbSchemaFromAst(schema);
+      entityMap = this.getEntityMapFromSchemaObject(schema);
+    } else if (schema && schema.kind === Kind.DOCUMENT) {
+      entityMap = this.getEntityMapFromAst(schema);
     } else {
       throw new IdbGraphQLError("[IdbGraphQL] The provided schema should be a schema graphql string,"
         + " an AST of the string, or a GraphQLSchema object");
     }
+    return this.getIdbSchemaFromEntityInfo(entityMap);
   }
 
   /**
    * Get idb schema from graphql schema string
    */
-  public getIdbSchemaFromString(schemaStr: string): IdbSchema {
-    return this.getIdbSchemaFromAst(parse(schemaStr, { noLocation: true }));
+  protected getEntityMapFromString(schemaStr: string): EntityMap {
+    return this.getEntityMapFromAst(parse(schemaStr, { noLocation: true }));
   }
 
   /**
    * Get idb schema from graphql schema ast
    */
-  public getIdbSchemaFromAst(schemaAST: DocumentNode): IdbSchema {
+  protected getEntityMapFromAst(schemaAST: DocumentNode): EntityMap {
     let directives: boolean = false;
 
     // check if the ast contains any of the IdbGraphQL-defined directives
@@ -112,6 +119,7 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
       if (schemaAST.definitions.some(
         (d) => d.kind === Kind.DIRECTIVE_DEFINITION && Object.keys(directiveASTs).includes(d.name.value),
       )) {
+        /* istanbul ignore next */
         if (process.env.NODE_ENV !== "production" && !this.config.schemaConfig.suppressDuplicateDirectivesWarning) {
           console.warn("[IdbGraphQL] If using IdbGraphQL-defined directives, "
             + "it is not recommended to define any directives with same name "
@@ -131,27 +139,22 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
       entityMap = this.getEntityMapFromSchemaObjectWithDirectives(buildASTSchema(schemaAST));
     }
 
-    return this.getIdbSchemaFromEntityInfo(entityMap);
+    return entityMap;
   }
 
   /**
    * Get idb schema from graphql schema object
    */
-  public getIdbSchemaFromSchemaObject(schemaObject: GraphQLSchema): IdbSchema {
-    let entityMap: EntityMap;
-    if (
-      schemaObject
-        .getDirectives()
-        .some((directive) => Object.keys(directiveASTs).includes(directive.name))
-    ) {
-      entityMap = this.getEntityMapFromSchemaObjectWithDirectives(schemaObject);
-    } else {
-      entityMap = this.getEntityMapFromSchemaObjectWithoutDirectives(schemaObject);
-    }
-    return this.getIdbSchemaFromEntityInfo(entityMap);
+  protected getEntityMapFromSchemaObject(schemaObject: GraphQLSchema): EntityMap {
+    const directivesUsed: boolean = schemaObject
+      .getDirectives()
+      .some((directive) => Object.keys(directiveASTs).includes(directive.name));
+    return directivesUsed
+      ? this.getEntityMapFromSchemaObjectWithDirectives(schemaObject)
+      : this.getEntityMapFromSchemaObjectWithoutDirectives(schemaObject);
   }
 
-  public getEntityMapFromSchemaObjectWithDirectives(schema: GraphQLSchema): EntityMap {
+  protected getEntityMapFromSchemaObjectWithDirectives(schema: GraphQLSchema): EntityMap {
     const entityList: Map<string, GraphQLObjectType> = new Map();
     const entityMap: EntityMap = new Map();
 
@@ -174,6 +177,7 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
       }
 
       // skip if no directives are used for this object type
+      /* istanbul ignore if */
       if (!objectType.astNode.directives) {
         continue;
       }
@@ -214,6 +218,7 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
       // for all fields of the entity
       for (const field of fieldsArr) {
         // check if this field has any directives
+        /* istanbul ignore if */
         if (!field.astNode!.directives) {
           continue;
         }
@@ -243,7 +248,9 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
         let fieldIndex: FieldInfo["index"] = null;
         switch (directiveInfo.name) {
           case "IdbPrimary":
-            fieldIndex = directiveInfo.args.auto.value ? directiveInfo.args.auto.value : "primary";
+            fieldIndex = !!directiveInfo.args.auto.value && directiveInfo.args.auto.value !== "none"
+              ? directiveInfo.args.auto.value
+              : "primary";
             break;
           case "IdbUnique":
           case "IdbIndex":
@@ -251,13 +258,25 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
             if (directiveInfo.args.multi.value) {
               fieldIndex.push("multi");
             }
+            // TODO composite group
             break;
           case "IdbRelation":
-            fieldIndex = [directiveInfo.args.many.value ? "multi" : "plain"];
+            // check if the return type is an entity
+            const refEntity = getNamedType(field.type);
+            if (!entityList.has(refEntity.name)) {
+              throw new IdbGraphQLError(`[IdbGraphQL] @IdbRelation should be used on a field `
+                + `that returns an entity or an array of an entity, but field ${field.name} of entity ${name} `
+                + `does not satisfy the constraint`);
+            }
+            // set the index
+            fieldIndex = [checkIfRelationIsMany(field.type) ? "multi" : "plain"];
             if (directiveInfo.args.unique.value) {
               fieldIndex.push("unique");
             }
             fieldName += "Id";
+            break;
+            /* istanbul ignore next */
+          default:
             break;
         }
 
@@ -271,7 +290,7 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
     return entityMap;
   }
 
-  public getEntityMapFromSchemaObjectWithoutDirectives(schema: GraphQLSchema): EntityMap {
+  protected getEntityMapFromSchemaObjectWithoutDirectives(schema: GraphQLSchema): EntityMap {
     const entityList: Map<string, GraphQLObjectType> = new Map();
     const entityMap: EntityMap = new Map();
     const operationTypes: string[] = ["Query", "Mutation", "Subscription"];
@@ -332,7 +351,7 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
   /**
    * Get final idb schema from the list of entities and their info
    */
-  public getIdbSchemaFromEntityInfo(entityMap: EntityMap): IdbSchema {
+  protected getIdbSchemaFromEntityInfo(entityMap: EntityMap): IdbSchema {
     const schema: IdbSchema = {};
 
     for (const [entityName, entityInfo] of entityMap) {

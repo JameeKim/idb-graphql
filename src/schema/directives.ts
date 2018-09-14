@@ -14,7 +14,7 @@ export const directiveStrings = {
   IdbEntity: gql`directive @IdbEntity on OBJECT`,
   IdbPrimary: gql`directive @IdbPrimary(auto: String = "", forceInt: Boolean = false) on FIELD_DEFINITION`,
   IdbUnique: gql`directive @IdbUnique(multi: Boolean = false, compositeGroup: String) on FIELD_DEFINITION`,
-  IdbRelation: gql`directive @IdbRelation(many: Boolean!, unique: Boolean = false) on FIELD_DEFINITION`,
+  IdbRelation: gql`directive @IdbRelation(unique: Boolean = false) on FIELD_DEFINITION`,
   IdbIndex: gql`directive @IdbIndex(multi: Boolean = false, compositeGroup: String) on FIELD_DEFINITION`,
 };
 
@@ -79,10 +79,6 @@ export const directiveTypes: { [k in keyof typeof directiveStrings]: GraphQLDire
       DirectiveLocation.FIELD_DEFINITION,
     ],
     args: {
-      many: {
-        type: new GraphQLNonNull(GraphQLString),
-        description: "",
-      },
       unique: {
         type: GraphQLBoolean,
         defaultValue: false,

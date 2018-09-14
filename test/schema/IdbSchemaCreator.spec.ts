@@ -1,11 +1,18 @@
 import { expect } from "chai";
 import Dexie from "dexie";
-import { buildSchema } from "graphql";
-import { EntityMap, IdbGraphQLDefaultConfig, IdbGraphQLError, IdbSchemaCreator } from "../../src";
+import { buildSchema, GraphQLObjectType, parse } from "graphql";
+import {
+  directiveStrings,
+  EntityMap,
+  IdbGraphQLDefaultConfig,
+  IdbGraphQLError,
+  IdbSchemaCreator,
+} from "../../src";
 
-describe("IdbSchemaCreator", function() {
+describe("IdbSchemaCreator#getIdbSchema", function() {
   const dexie = new Dexie("Test", { indexedDB, IDBKeyRange });
   const schemaCreator = new IdbSchemaCreator(dexie, [], IdbGraphQLDefaultConfig);
+  schemaCreator.setConfig({ suppressDuplicateDirectivesWarning: true });
   const gql = (str: TemplateStringsArray): string => str.join("");
 
   describe("#getIdbSchemaFromEntityInfo(entityMap)", function() {
@@ -17,6 +24,7 @@ describe("IdbSchemaCreator", function() {
 
     describe("- When there are no entities", function() {
       it("should return empty object", function() {
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.be.an("object").that.is.empty;
       });
@@ -31,6 +39,7 @@ describe("IdbSchemaCreator", function() {
             index: "primary",
           }],
         });
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.deep.eq({
           MyEntity: "id",
@@ -45,6 +54,7 @@ describe("IdbSchemaCreator", function() {
             index: "auto",
           }],
         });
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.deep.eq({
           MyEntity: "++id",
@@ -59,6 +69,7 @@ describe("IdbSchemaCreator", function() {
             index: "uuid",
           }],
         });
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.deep.eq({
           MyEntity: "$$id",
@@ -74,6 +85,7 @@ describe("IdbSchemaCreator", function() {
             index: "unknown",
           }],
         });
+        // @ts-ignore: access to protected method
         expect(() => schemaCreator.getIdbSchemaFromEntityInfo(entityMap))
           .to.throw(IdbGraphQLError, "Unsupported primary key type unknown");
       });
@@ -89,6 +101,7 @@ describe("IdbSchemaCreator", function() {
             index: "uuid",
           }],
         });
+        // @ts-ignore: access to protected method
         expect(() => schemaCreator.getIdbSchemaFromEntityInfo(entityMap))
           .to.throw(IdbGraphQLError, "duplicate primary keys ++primary and another");
       });
@@ -101,6 +114,7 @@ describe("IdbSchemaCreator", function() {
             index: ["plain"],
           }],
         });
+        // @ts-ignore: access to protected method
         expect(() => schemaCreator.getIdbSchemaFromEntityInfo(entityMap))
           .to.throw(IdbGraphQLError, "Entity NoPrimaryKeyEntity does not have a primary key");
       });
@@ -118,6 +132,7 @@ describe("IdbSchemaCreator", function() {
             index: ["unique"],
           }],
         });
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.deep.eq({
           User: "id,&email",
@@ -135,6 +150,7 @@ describe("IdbSchemaCreator", function() {
             index: ["multi"],
           }],
         });
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.deep.eq({
           User: "++id,*email",
@@ -155,6 +171,7 @@ describe("IdbSchemaCreator", function() {
             index: [],
           }],
         });
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.deep.eq({
           Todo: "++id,title,done",
@@ -172,6 +189,7 @@ describe("IdbSchemaCreator", function() {
             index: ["unique", "multi"],
           }],
         });
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.deep.eq({
           User: "$$id,*&email",
@@ -190,6 +208,7 @@ describe("IdbSchemaCreator", function() {
             index: ["unknown"],
           }],
         });
+        // @ts-ignore: access to protected method
         expect(() => schemaCreator.getIdbSchemaFromEntityInfo(entityMap))
           .to.throw(IdbGraphQLError, "Unsupported index type unknown");
       });
@@ -210,6 +229,7 @@ describe("IdbSchemaCreator", function() {
             index: null,
           }],
         });
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.deep.eq({
           MyEntity: "$$id,&email",
@@ -251,6 +271,7 @@ describe("IdbSchemaCreator", function() {
             index: [],
           }],
         });
+        // @ts-ignore: access to protected method
         const schema = schemaCreator.getIdbSchemaFromEntityInfo(entityMap);
         expect(schema).to.deep.eq({
           User: "$$id,&username,*&todo",
@@ -260,7 +281,7 @@ describe("IdbSchemaCreator", function() {
     });
   });
 
-  describe("#getEntityMapFromSchemaObjectWithoutDirectives(schema)", function() {
+  describe("## Schema Object Without Directives", function() {
     describe("- When there are no entities", function() {
       it("should return empty map", function() {
         const schemaStr = gql`
@@ -271,8 +292,8 @@ describe("IdbSchemaCreator", function() {
             hello: String!
           }
         `;
-        const map = schemaCreator.getEntityMapFromSchemaObjectWithoutDirectives(buildSchema(schemaStr));
-        expect(map.size).to.eq(0);
+        const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr));
+        expect(Object.keys(schema)).to.be.lengthOf(0);
       });
     });
 
@@ -315,9 +336,8 @@ describe("IdbSchemaCreator", function() {
               id: ID
             }
           `;
-          const map: EntityMap = schemaCreator.getEntityMapFromSchemaObjectWithoutDirectives(buildSchema(schemaStr));
-          expect(map.size).to.eq(3);
-          expect(Array.from(map.keys())).to.have.members(["User", "Todo", "Post"]);
+          const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr));
+          expect(Object.keys(schema)).to.be.lengthOf(3).and.have.members(["User", "Todo", "Post"]);
         },
       );
 
@@ -354,9 +374,8 @@ describe("IdbSchemaCreator", function() {
             values
           }
         `;
-        const map: EntityMap = schemaCreator.getEntityMapFromSchemaObjectWithoutDirectives(buildSchema(schemaStr));
-        expect(map.size).to.eq(1);
-        expect(map.has("User")).to.be.true;
+        const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr));
+        expect(Object.keys(schema)).to.be.lengthOf(1).and.include("User");
       });
     });
 
@@ -385,73 +404,311 @@ describe("IdbSchemaCreator", function() {
               post: Post!
             }
           `;
-          const map: EntityMap = schemaCreator.getEntityMapFromSchemaObjectWithoutDirectives(buildSchema(schemaStr));
-          expect(Array.from(map.keys())).to.have.lengthOf(3).and.have.members(["User", "Post", "Comment"]);
-          expect(map.get("User")).to.deep.eq({
-            name: "User",
-            fields: [{
-              name: "id",
-              index: "primary",
-            }, {
-              name: "postsId",
-              index: ["multi"],
-            }, {
-              name: "commentsId",
-              index: ["multi"],
-            }],
-          });
-          expect(map.get("Post")).to.deep.eq({
-            name: "Post",
-            fields: [{
-              name: "id",
-              index: "primary",
-            }, {
-              name: "authorId",
-              index: ["plain"],
-            }, {
-              name: "commentsId",
-              index: ["multi"],
-            }],
-          });
-          expect(map.get("Comment")).to.deep.eq({
-            name: "Comment",
-            fields: [{
-              name: "id",
-              index: "primary",
-            }, {
-              name: "authorId",
-              index: ["plain"],
-            }, {
-              name: "postId",
-              index: ["plain"],
-            }],
+          const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr));
+          expect(schema).to.deep.eq({
+            User: "id,*postsId,*commentsId",
+            Post: "id,authorId,*commentsId",
+            Comment: "id,authorId,postId",
           });
         },
       );
     });
   });
 
-  describe("#getEntityMapFromSchemaObjectWithDirectives(schema)", function() {
-    describe("- @IdbEntity", function() {
-      it("should", function() {
-        const schemaStr = gql``;
-        // TODO
-      });
-    });
+  describe("## Schema Object With Directives", function() {
+    const directiveDefs: string = Object.values(directiveStrings).join("\n");
 
-    describe("- Errors", function() {
-      it("should throw if astNode is not provided for an object type", function() {
+    describe("- @IdbEntity", function() {
+      it("should only pick object type with @IdbEntity directive", function() {
         const schemaStr = gql`
-          directive @IdbEntity on OBJECT
           type Entity @IdbEntity {
+            id: ID! @IdbPrimary
+          }
+          type NotEntity {
             id: ID!
           }
         `;
-        const schema = buildSchema(schemaStr);
+        const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs));
+        expect(Object.keys(schema)).to.be.lengthOf(1).and.include("Entity");
+      });
+    });
+
+    describe("- @IdbPrimary", function() {
+      it("should set auto-generation if argument \"auto\" is provided", function() {
+        const schemaStr = gql`
+          type Entity @IdbEntity {
+            id: String! @IdbPrimary
+          }
+          type AutoIncrement @IdbEntity {
+            id: Int! @IdbPrimary(auto: "auto")
+          }
+          type UuidEntity @IdbEntity {
+            id: String! @IdbPrimary(auto: "uuid")
+          }
+        `;
+        const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs));
+        expect(schema).to.deep.eq({
+          Entity: "id",
+          AutoIncrement: "++id",
+          UuidEntity: "$$id",
+        });
+      });
+
+      it("should throw if @IdbPrimary is not used", function() {
+        const schemaStr = gql`
+          type NoPrimary @IdbEntity {
+            id: ID!
+            uuid: String! @IdbUnique
+          }
+        `;
+        expect(() => schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs)))
+          .to.throw(IdbGraphQLError, "with @IdbPrimary directive, but it is not found for entity NoPrimary");
+      });
+
+      it("should throw if @IdbPrimary is used multiple times", function() {
+        const schemaStr = gql`
+          type MultiplePrimary @IdbEntity {
+            id: ID! @IdbPrimary
+            uuid: String! @IdbPrimary
+          }
+        `;
+        expect(() => schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs)))
+          .to.throw(IdbGraphQLError, "multiple primary keys detected for entity MultiplePrimary");
+      });
+    });
+
+    describe("- @IdbUnique", function() {
+      it("should set unique index", function() {
+        const schemaStr = gql`
+          type Entity @IdbEntity {
+            id: ID! @IdbPrimary
+            uuid: String! @IdbUnique
+          }
+          type MultiUniqueEntity @IdbEntity {
+            id: ID! @IdbPrimary
+            uids: [String!]! @IdbUnique(multi: true)
+          }
+        `;
+        const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs));
+        expect(schema).to.deep.eq({
+          Entity: "id,&uuid",
+          MultiUniqueEntity: "id,*&uids",
+        });
+      });
+    });
+
+    describe("- @IdbIndex", function() {
+      it("should set plain or multi index", function() {
+        const schemaStr = gql`
+          type User @IdbEntity {
+            id: ID! @IdbPrimary
+            city: String @IdbIndex
+            phones: [String!]! @IdbIndex(multi: true)
+          }
+        `;
+        const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs));
+        expect(schema).to.deep.eq({
+          User: "id,city,*phones",
+        });
+      });
+    });
+
+    describe("- @IdbRelation", function() {
+      it("should set right index based on the output type of the field", function() {
+        const schemaStr = gql`
+          type User @IdbEntity {
+            id: ID! @IdbPrimary(auto: "uuid")
+            todoLists: [TodoList!]! @IdbRelation
+          }
+          type TodoList @IdbEntity {
+            id: ID! @IdbPrimary(auto: "uuid")
+            owner: User! @IdbRelation
+            todos: [Todo!]! @IdbRelation
+          }
+          type Todo @IdbEntity {
+            id: Int! @IdbPrimary(auto: "auto")
+            title: String! @IdbIndex
+            list: TodoList @IdbRelation
+            done: Boolean!
+          }
+        `;
+        const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs));
+        expect(schema).to.deep.eq({
+          User: "$$id,*todoListsId",
+          TodoList: "$$id,ownerId,*todosId",
+          Todo: "++id,title,listId",
+        });
+      });
+
+      it("should set unique index if specified so", function() {
+        const schemaStr = gql`
+          type User @IdbEntity {
+            id: ID! @IdbPrimary(auto: "uuid")
+            info: UserInfo! @IdbRelation(unique: true)
+          }
+          type UserInfo @IdbEntity {
+            id: Int! @IdbPrimary(auto: "auto")
+            name: String
+            city: String
+          }
+        `;
+        const schema = schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs));
+        expect(schema).to.deep.eq({
+          User: "$$id,&infoId",
+          UserInfo: "++id",
+        });
+      });
+
+      it("should throw if the output type of the field is not an entity", function() {
+        const schemaStr = gql`
+          type User @IdbEntity {
+            id: ID! @IdbPrimary(auto: "uuid")
+            role: UserRole! @IdbRelation
+          }
+          type UserRole {
+            admin: Boolean!
+          }
+        `;
+        const errorMsg = "@IdbRelation should be used on a field that returns an entity "
+          + "or an array of an entity, but field role of entity User does not satisfy the constraint";
+        expect(() => schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs)))
+          .to.throw(IdbGraphQLError, errorMsg);
+      });
+    });
+
+    describe("- AstNode not given", function() {
+      it("should throw if astNode is not provided for an object type", function() {
+        const schemaStr = gql`
+          type Entity @IdbEntity {
+            id: ID! @IdbPrimary
+          }
+        `;
+        const schema = buildSchema(schemaStr + directiveDefs);
         schema.getType("Entity")!.astNode = undefined;
-        expect(() => schemaCreator.getEntityMapFromSchemaObjectWithDirectives(schema))
+        expect(() => schemaCreator.getIdbSchema(schema))
           .to.throw(IdbGraphQLError, "but could not find astNode for object type Entity");
       });
+
+      it("should throw if astNode is not provided for a field of an entity", function() {
+        const schemaStr = gql`
+          type GoodEntity @IdbEntity {
+            id: ID! @IdbPrimary
+          }
+          type BadEntity @IdbEntity {
+            id: ID! @IdbPrimary
+          }
+        `;
+        const schema = buildSchema(schemaStr + directiveDefs);
+        (schema.getType("BadEntity") as GraphQLObjectType).getFields().id.astNode = undefined;
+        expect(() => schemaCreator.getIdbSchema(schema))
+          .to.throw(IdbGraphQLError, "but could not find astNode for some fields in entity BadEntity");
+      });
+    });
+
+    describe("- Misuse of index-indicating directives", function() {
+      it("should throw if multiple @Idb* directives are used on one field", function() {
+        const schemaStr = gql`
+          type ErrorEntity @IdbEntity {
+            id: ID! @IdbPrimary @IdbUnique
+          }
+        `;
+        expect(() => schemaCreator.getIdbSchema(buildSchema(schemaStr + directiveDefs)))
+          .to.throw(IdbGraphQLError, "multiple of them used for field id in entity ErrorEntity");
+      });
+    });
+  });
+
+  describe("## Schema AST and String", function() {
+    describe("- With @Idb* directives", function() {
+      const schemaStr = gql`
+        type User @IdbEntity {
+          id: ID! @IdbPrimary(auto: "uuid")
+          todoLists: [TodoList!]! @IdbRelation
+        }
+        type TodoList @IdbEntity {
+          id: ID! @IdbPrimary(auto: "uuid")
+          owner: User! @IdbRelation
+          todos: [Todo!]! @IdbRelation
+        }
+        type Todo @IdbEntity {
+          id: Int! @IdbPrimary(auto: "auto")
+          title: String! @IdbIndex
+          list: TodoList @IdbRelation
+          done: Boolean!
+        }
+      `;
+
+      it("should parse the schema (directive definitions not provided)", function() {
+        const schema = schemaCreator.getIdbSchema(schemaStr);
+        expect(schema).to.deep.eq(schemaCreator.getIdbSchema(parse(schemaStr, { noLocation: true })));
+        expect(schema).to.deep.eq({
+          User: "$$id,*todoListsId",
+          TodoList: "$$id,ownerId,*todosId",
+          Todo: "++id,title,listId",
+        });
+      });
+
+      it("should parse the schema (directive definitions all provided)", function() {
+        const schemaStrWithDirectives = schemaStr + Object.values(directiveStrings).join("\n");
+        const schema = schemaCreator.getIdbSchema(schemaStrWithDirectives);
+        expect(schema)
+          .to.deep.eq(schemaCreator.getIdbSchema(parse(schemaStrWithDirectives, { noLocation: true })));
+        expect(schema).to.deep.eq({
+          User: "$$id,*todoListsId",
+          TodoList: "$$id,ownerId,*todosId",
+          Todo: "++id,title,listId",
+        });
+      });
+    });
+
+    describe("- Without @Idb* directives", function() {
+      it("should parse the schema", function() {
+        const schemaStr = gql`
+          type User {
+            id: ID!
+            email: String! @deprecated(reason: "Use username")
+            username: String!
+            posts: [Post!]!
+            comments: [Comment!]!
+          }
+          type Post {
+            id: ID!
+            title: String!
+            content: String!
+            author: User!
+            comments: [Comment!]!
+          }
+          type Comment {
+            id: ID!
+            content: String!
+            author: User!
+            post: Post!
+          }
+        `;
+        const schema = schemaCreator.getIdbSchema(schemaStr);
+        expect(schema).to.deep.eq(schemaCreator.getIdbSchema(parse(schemaStr, { noLocation: true })));
+        expect(schema).to.deep.eq({
+          User: "id,*postsId,*commentsId",
+          Post: "id,authorId,*commentsId",
+          Comment: "id,authorId,postId",
+        });
+      });
+    });
+  });
+
+  describe("## Wrong input type", function() {
+    it("should throw", function() {
+      const schemaStr = gql`
+        type User {
+          id: ID!
+          email: String!
+        }
+      `;
+      const ast = parse(schemaStr, { noLocation: true });
+      // @ts-ignore: schema input type is not a full ast
+      expect(() => schemaCreator.getIdbSchema(ast.definitions))
+        .to.throw(IdbGraphQLError, "The provided schema should be a schema graphql string, "
+          + "an AST of the string, or a GraphQLSchema object");
     });
   });
 });
