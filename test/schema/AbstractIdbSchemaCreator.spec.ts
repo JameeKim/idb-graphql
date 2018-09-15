@@ -5,7 +5,7 @@ import { AbstractIdbSchemaCreator, IdbGraphQLDefaultConfig, IdbGraphQLError } fr
 describe("AbstractIdbSchemaCreator", function() {
   it("should throw error when used to set idb schema", function() {
     const dexie = new Dexie("Error", { indexedDB, IDBKeyRange });
-    const schemaCreator = new AbstractIdbSchemaCreator(dexie, [], IdbGraphQLDefaultConfig);
+    const schemaCreator = new AbstractIdbSchemaCreator(dexie, [], IdbGraphQLDefaultConfig.schemaConfig);
     expect(() => schemaCreator.setSchema())
       .to.throw(IdbGraphQLError, "Use IdbSchemaCreator class, or extend this class to implement your own.");
   });

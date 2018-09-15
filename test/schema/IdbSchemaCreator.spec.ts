@@ -11,7 +11,7 @@ import {
 
 describe("IdbSchemaCreator#getIdbSchema", function() {
   const dexie = new Dexie("Test", { indexedDB, IDBKeyRange });
-  const schemaCreator = new IdbSchemaCreator(dexie, [], IdbGraphQLDefaultConfig);
+  const schemaCreator = new IdbSchemaCreator(dexie, [], IdbGraphQLDefaultConfig.schemaConfig);
   schemaCreator.setConfig({ suppressDuplicateDirectivesWarning: true });
   const gql = (str: TemplateStringsArray): string => str.join("");
 

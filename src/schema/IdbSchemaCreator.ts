@@ -36,13 +36,13 @@ import { getDirectiveValueInfo } from "./ASTUtils";
 import { directiveASTs, directiveTypes } from "./directives";
 
 export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
-  constructor(db: Dexie, schema: Array<Maybe<IdbSchemaInput>>, config: IdbGraphQLConfigInternal) {
+  constructor(db: Dexie, schema: Array<Maybe<IdbSchemaInput>>, config: Required<IdbGraphQLSchemaConfig>) {
     super(db, schema, config);
     // TODO create upgrade map here?
   }
 
   public setConfig(config: IdbGraphQLSchemaConfig): void {
-    Object.assign(this.config.schemaConfig, config);
+    Object.assign(this.config, config);
   }
 
   /**
@@ -120,7 +120,7 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
         (d) => d.kind === Kind.DIRECTIVE_DEFINITION && Object.keys(directiveASTs).includes(d.name.value),
       )) {
         /* istanbul ignore next */
-        if (process.env.NODE_ENV !== "production" && !this.config.schemaConfig.suppressDuplicateDirectivesWarning) {
+        if (process.env.NODE_ENV !== "production" && !this.config.suppressDuplicateDirectivesWarning) {
           console.warn("[IdbGraphQL] If using IdbGraphQL-defined directives, "
             + "it is not recommended to define any directives with same name "
             + "unless they are the same ones to those defined in this library.");
@@ -320,7 +320,7 @@ export class IdbSchemaCreator extends AbstractIdbSchemaCreator {
       if (
         !isNonNullType(idType)
         || !isScalarType(idType.ofType)
-        || !this.config.schemaConfig.entityIdTypes.includes(idType.ofType.name)
+        || !this.config.entityIdTypes.includes(idType.ofType.name)
       ) {
         continue;
       }

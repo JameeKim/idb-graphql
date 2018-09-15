@@ -4,8 +4,11 @@ General:
   [X] script to check coverage
   [ ] add "yarn coverage:check" to travis
 
+Plugins:
+  [ ] add directives? how?
+
 IdbSchemaCreator:
-  [ ] only accept schemaConfig from config
+  [X] only accept schemaConfig from config
   [ ] docblocks
 
 Relation:

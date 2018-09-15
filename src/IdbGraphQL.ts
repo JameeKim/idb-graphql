@@ -12,9 +12,9 @@ import {
 import { IdbGraphQLSchemaConfig } from "./types/IdbGraphQL";
 
 export const IdbGraphQLDefaultConfig: IdbGraphQLConfigInternal = {
-  upgradeMap: {},
-  versionStart: 1,
   schemaConfig: {
+    upgradeMap: {},
+    versionStart: 1,
     schemaCreator: IdbSchemaCreator,
     suppressDuplicateDirectivesWarning: false,
     entityIdTypes: ["ID", "Int", "String"],
@@ -41,7 +41,8 @@ export class IdbGraphQL implements IdbGraphQLInterface {
         addons: [DexieObservable],
       });
     }
-    this.schemaCreator = new this.config.schemaConfig.schemaCreator(this.db, this.schemaInput, this.config);
+    this.schemaCreator
+      = new this.config.schemaConfig.schemaCreator(this.db, this.schemaInput, this.config.schemaConfig);
   }
 
   public query() {

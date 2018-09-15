@@ -3,7 +3,6 @@ import {
   DirectiveLocation,
   GraphQLBoolean,
   GraphQLDirective,
-  GraphQLNonNull,
   GraphQLString,
   parse,
 } from "graphql";

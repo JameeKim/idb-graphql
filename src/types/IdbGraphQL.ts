@@ -10,13 +10,13 @@ export interface IdbGraphQLInterface {
 
 export interface IdbGraphQLConfig {
   schema: IdbSchemaInput | Array<Maybe<IdbSchemaInput>>;
-  upgradeMap?: UpgradeMap;
-  versionStart?: number;
   idbBridge?: Dexie;
   schemaConfig?: IdbGraphQLSchemaConfig;
 }
 
 export interface IdbGraphQLSchemaConfig {
+  upgradeMap?: UpgradeMap;
+  versionStart?: number;
   schemaCreator?: typeof AbstractIdbSchemaCreator;
   suppressDuplicateDirectivesWarning?: boolean;
   entityIdTypes?: string[];
